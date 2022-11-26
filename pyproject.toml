@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "friends-wallet"
+version = "0.1.0"
+description = ""
+authors = ["Timur Alchin"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.9.12"
+Django = "^4.1.3"
+autopep8 = "^2.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
