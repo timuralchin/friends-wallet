@@ -1,5 +1,5 @@
 from source.apps.receipts.models import Receipt
-from source.apps.debts.models import Debt
+from source.apps.debts.models import Debt, TempDebts, PersonReceiptDebts
 
 
 class ReceiptServices:
@@ -40,3 +40,34 @@ class ReceiptServices:
         for position in positions:
             debt_amount += position.amount / position.subjects.count()
         return debt_amount
+
+    def create_personal_debts(self):
+        debts = self.receipt.debts.as_debts()
+        credits = self.receipt.debts.as_credits()
+        temp_credits = TempDebts.objects.bulk_create(
+            [
+                TempDebts(debt=credit, amount=credit.amount)
+                for credit in credits
+            ]
+        )
+        for debt in debts:
+            temp_debt = TempDebts.objects.create(
+                debt=debt,
+                amount=debt.amount
+            )
+            for temp_credit in temp_credits:
+                temp_amount = min(temp_debt.amount, abs(temp_credit.amount))
+                if temp_amount == 0:
+                    continue
+                temp_debt.reduce(temp_amount)
+                temp_credit.increase(temp_amount)
+                PersonReceiptDebts.objects.update_or_create(
+                    amount=temp_amount,
+                    receipt=self.receipt,
+                    debtor=debt.user,
+                    creditor=temp_credit.debt.user,
+                )
+                if temp_debt.amount <= 0:
+                    temp_debt.delete()
+                    break
+        TempDebts.objects.filter(debt__in=credits).delete()

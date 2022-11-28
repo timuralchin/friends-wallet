@@ -1,7 +1,5 @@
 from django.contrib import admin
 from source.apps.receipts import models
-from source.apps.debts.models import Debt
-from django.db.models import Sum
 
 
 class PositionAdmin(admin.TabularInline):
@@ -21,6 +19,10 @@ class ReceiptAdmin(admin.ModelAdmin):
     inlines = [PositionAdmin, PayerAdmin]
 
     search_fields = ['name']
+    list_display = ('name', 'total_amount', 'created_at', 'payers')
+
+    def payers(self, obj: models.Receipt) -> list[str]:
+        return [payer for payer in obj.payers.all()]
 
 
 admin.site.register(models.Receipt, ReceiptAdmin)
